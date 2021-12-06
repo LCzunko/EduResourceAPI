@@ -67,6 +67,8 @@ builder.Services.AddSingleton<IJwtAuth>(new JwtAuth(builder.Configuration["JwtCo
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<EduResourceDbContext>();
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 builder.Services.AddMvc(options =>
 {
     options.Filters.Add(new ErrorHandlingFilter());
