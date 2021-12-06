@@ -1,4 +1,4 @@
-﻿namespace EduResourceAPI.Models.Entities
+﻿namespace EduResourceAPI.Models.DTOs
 {
     public class AuthorReadDTO
     {

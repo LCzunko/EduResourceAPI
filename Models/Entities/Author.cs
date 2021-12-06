@@ -16,8 +16,5 @@ namespace EduResourceAPI.Models.Entities
         public string Description { get; set; } = null!;
 
         public ICollection<Material> Materials { get; set; } = null!;
-
-        // TODO DTO ONLY
-        public int MaterialsCount { get { return Materials.Count(); } }
     }
 }
