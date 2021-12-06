@@ -65,6 +65,7 @@ builder.Services.AddAuthentication(options => {
 builder.Services.AddSingleton<IJwtAuth>(new JwtAuth(builder.Configuration["JwtConfig:Key"]));
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<EduResourceDbContext>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -75,6 +76,16 @@ builder.Services.AddMvc(options =>
 });
 
 var app = builder.Build();
+
+try
+{
+    DataSeeder.Initialize(app.Services.CreateScope().ServiceProvider, builder.Configuration.GetSection("InitialAdmin"));
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred seeding the DB.");
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
