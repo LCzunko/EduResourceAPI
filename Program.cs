@@ -64,9 +64,14 @@ builder.Services.AddAuthentication(options => {
 
 builder.Services.AddSingleton<IJwtAuth>(new JwtAuth(builder.Configuration["JwtConfig:Key"]));
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-                .AddRoles<IdentityRole>()
-                .AddEntityFrameworkStores<EduResourceDbContext>();
+builder.Services.AddDefaultIdentity<IdentityUser>(options => {
+    options.Password.RequireDigit = false;
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
+}).AddRoles<IdentityRole>()
+  .AddEntityFrameworkStores<EduResourceDbContext>();
 
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
