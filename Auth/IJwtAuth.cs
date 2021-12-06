@@ -4,6 +4,6 @@ namespace EduResourceAPI.Auth
 {
     public interface IJwtAuth
     {
-        string GenerateJwtToken(IdentityUser user);
+        Task<string> GenerateJwtToken(IdentityUser user, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager);
     }
 }
