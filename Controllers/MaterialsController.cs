@@ -5,6 +5,7 @@ using EduResourceAPI.Models.DTOs;
 using EduResourceAPI.Models.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -117,6 +118,56 @@ namespace EduResourceAPI.Controllers
 
             _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Success - Id: {materialEntity.Id}");
             return CreatedAtAction("GetMaterials", new { materialId = materialEntity.Id }, _mapper.Map<MaterialReadDTO>(materialEntity));
+        }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
+        [HttpPatch("{materialId}")]
+        public async Task<ActionResult> PatchMaterials(int materialId, JsonPatchDocument<Material> materialPatch)
+        {
+            var materials = await _unitOfWork.Materials.Get(x => x.Id == materialId, "Author,Category");
+            var materialEntity = materials.SingleOrDefault();
+            if (materialEntity is null)
+            {
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - Material Not Found");
+                return NotFound();
+            }
+
+            materialPatch.ApplyTo(materialEntity, ModelState);
+
+            if (!ModelState.IsValid)
+            {
+                IEnumerable<string> errors = ModelState.Values.SelectMany(state => state.Errors).Select(error => error.ErrorMessage);
+                var traceId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - {string.Join(" | ", errors)}");
+                return BadRequest(new BadRequestError(traceId, ModelState));
+            }
+
+            var authors = await _unitOfWork.Authors.Get(x => x.Id == materialEntity.AuthorId);
+            var author = authors.SingleOrDefault();
+            if (author is null)
+            {
+                Dictionary<string, string> errors = new() { { "AuthorId", "Author does not exist in database." } };
+                var traceId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - {string.Join(" | ", errors)}");
+                return BadRequest(new BadRequestError(traceId, errors));
+            }
+
+            var categories = await _unitOfWork.Categories.Get(x => x.Id == materialEntity.CategoryId);
+            var category = authors.SingleOrDefault();
+            if (category is null)
+            {
+                Dictionary<string, string> errors = new() { { "CategoryId", "Category does not exist in database." } };
+                var traceId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - {string.Join(" | ", errors)}");
+                return BadRequest(new BadRequestError(traceId, errors));
+            }
+
+            _unitOfWork.Materials.Update(materialEntity);
+            bool result = await _unitOfWork.Commit();
+            if (result is false) return BadRequest();
+
+            _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Success");
+            return NoContent();
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
