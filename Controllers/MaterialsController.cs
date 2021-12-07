@@ -26,6 +26,36 @@ namespace EduResourceAPI.Controllers
             _unitOfWork = unitOfWork;
         }
 
+        [HttpGet("category/{categoryId}")]
+        public async Task<ActionResult<ICollection<MaterialReadDTO>>> GetMaterialsFiltered(int categoryId)
+        {
+            var materials = await _unitOfWork.Materials.Get(x => x.Category.Id == categoryId, "Author,Category");
+            if (materials is null || materials.Count == 0)
+            {
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - No Materials Exist");
+                return NotFound();
+            }
+
+            _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Success - {materials.Count}");
+            return Ok(_mapper.Map<ICollection<MaterialReadDTO>>(materials));
+        }
+
+        [HttpGet("category/{categoryId}/sortByDate")]
+        public async Task<ActionResult<ICollection<MaterialReadDTO>>> GetMaterialsFilteredSorted(int categoryId)
+        {
+            var materials = await _unitOfWork.Materials.Get(x => x.Category.Id == categoryId, "Author,Category");
+            if (materials is null || materials.Count == 0)
+            {
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - No Materials Exist");
+                return NotFound();
+            }
+
+            materials = materials.OrderBy(x => x.Published).ToList();
+
+            _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Success - {materials.Count}");
+            return Ok(_mapper.Map<ICollection<MaterialReadDTO>>(materials));
+        }
+
         [HttpGet]
         public async Task<ActionResult<ICollection<MaterialReadDTO>>> GetMaterials()
         {
@@ -39,6 +69,7 @@ namespace EduResourceAPI.Controllers
             _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Success - {materials.Count}");
             return Ok(_mapper.Map<ICollection<MaterialReadDTO>>(materials));
         }
+
 
         [HttpGet("{materialId}")]
         public async Task<ActionResult<MaterialReadDTO>> GetMaterials(int materialId)
