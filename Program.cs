@@ -11,6 +11,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.ConfigureLogging(logging =>
+{
+    logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
+    logging.AddFilter("Microsoft.EntityFrameworkCore.Infrastructure", LogLevel.None);
+});
+
 // Add services to the container.
 
 builder.Services.AddControllers();
