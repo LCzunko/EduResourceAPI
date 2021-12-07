@@ -12,8 +12,12 @@
 
         public DateTime Published { get; set; }
 
-        public AuthorReadDTO Author { get; set; } = null!;
+        public int AuthorId { get; set; }
 
-        public CategoryReadDTO Category { get; set; } = null!;
+        public string AuthorName { get; set; } = null!;
+
+        public int CategoryId { get; set; }
+
+        public string CategoryName { get; set; } = null!;
     }
 }
