@@ -1,12 +1,10 @@
 ﻿using AutoMapper;
-using EduResourceAPI.Controllers.Errors;
 using EduResourceAPI.Data;
 using EduResourceAPI.Models.DTOs;
 using EduResourceAPI.Models.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
 namespace EduResourceAPI.Controllers
 {
