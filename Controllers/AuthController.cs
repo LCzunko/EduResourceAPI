@@ -1,12 +1,15 @@
 ﻿using EduResourceAPI.Auth;
+using EduResourceAPI.Controllers.Errors;
 using EduResourceAPI.Models.DTOs.AuthDTOs;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace EduResourceAPI.Controllers
 {
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
     [Route("auth")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -24,13 +27,17 @@ namespace EduResourceAPI.Controllers
             _jwtAuth = jwtAuth;
         }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Admin")]
-        [HttpPost]
-        [Route("register/admin")]
+        [HttpPost("register/admin")]
         public async Task<IActionResult> RegisterAdmin(AuthRegistrationDTO admin)
         {
             var existingUser = await _userManager.FindByEmailAsync(admin.Email);
-            if (existingUser != null) throw new BadHttpRequestException("Email address already in use.");
+            if (existingUser != null)
+            {
+                Dictionary<string, string> errors = new() { { "Email", "Email address already in use." } };
+                var traceId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+                _logger.LogInformation($"POST {Request.Path.Value} - Fail - {string.Join('\n', errors)}");
+                return BadRequest(new BadRequestError(traceId, errors));
+            }
 
             var newAdmin = new IdentityUser() { Email = admin.Email, UserName = admin.UserName };
 
@@ -45,17 +52,22 @@ namespace EduResourceAPI.Controllers
 
             string jwtToken = await _jwtAuth.GenerateJwtToken(newAdmin, _userManager, _roleManager);
 
-            _logger.LogInformation($"New admin registered - {admin.Email}");
+            _logger.LogInformation($"POST {Request.Path.Value} - Success - {admin.Email}");
             return Ok(new { BearerToken = jwtToken });
         }
 
         [AllowAnonymous]
-        [HttpPost]
-        [Route("register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register(AuthRegistrationDTO user)
         {
             var existingUser = await _userManager.FindByEmailAsync(user.Email);
-            if (existingUser != null) throw new BadHttpRequestException("Email address already in use.");
+            if (existingUser != null)
+            {
+                Dictionary<string, string> errors = new() { { "Email", "Email address already in use." } };
+                var traceId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+                _logger.LogInformation($"POST {Request.Path.Value} - Fail - {string.Join('\n', errors)}");
+                return BadRequest(new BadRequestError(traceId, errors));
+            }
 
             var newUser = new IdentityUser() { Email = user.Email, UserName = user.UserName };
 
@@ -67,25 +79,34 @@ namespace EduResourceAPI.Controllers
 
             string jwtToken = await _jwtAuth.GenerateJwtToken(newUser, _userManager, _roleManager);
 
-            _logger.LogInformation($"New user registered - {user.Email}");
+            _logger.LogInformation($"POST {Request.Path.Value} - Success - {user.Email}");
             return Ok(new { BearerToken = jwtToken });
         }
 
         [AllowAnonymous]
-        [HttpPost]
-        [Route("login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login(AuthLoginDTO user)
         {
             var existingUser = await _userManager.FindByEmailAsync(user.Email);
 
-            if (existingUser == null) return Unauthorized();
+            if (existingUser == null)
+            {
+                Dictionary<string, string> errors = new() { { "Email", "Email address already in use." } };
+                _logger.LogInformation($"POST {Request.Path.Value} - Fail - {string.Join('\n', errors)}");
+                return Unauthorized();
+            }
 
             bool isCorrect = await _userManager.CheckPasswordAsync(existingUser, user.Password);
-            if (!isCorrect) return Unauthorized();
+            if (!isCorrect)
+            {
+                Dictionary<string, string> errors = new() { { "Password", "Invalid password for user." } };
+                _logger.LogInformation($"POST {Request.Path.Value} - Fail - {string.Join('\n', errors)}");
+                return Unauthorized();
+            }
 
             string jwtToken = await _jwtAuth.GenerateJwtToken(existingUser, _userManager, _roleManager);
 
-            _logger.LogInformation($"User logged in - {user.Email}");
+            _logger.LogInformation($"POST {Request.Path.Value} - Success - {user.Email}");
             return Ok(new { BearerToken = jwtToken });
         }
     }
