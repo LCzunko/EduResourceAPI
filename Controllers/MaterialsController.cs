@@ -32,7 +32,7 @@ namespace EduResourceAPI.Controllers
             var materials = await _unitOfWork.Materials.Get(null!, "Author,Category");
             if (materials is null || materials.Count == 0)
             {
-                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - Not Materials Exist");
+                _logger.LogInformation($"{Request.Method} {Request.Path.Value} - Fail - No Materials Exist");
                 return NotFound();
             }
 
