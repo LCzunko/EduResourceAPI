@@ -8,10 +8,10 @@ namespace EduResourceAPI.Controllers.ErrorHandler
         {
             var exception = context.Exception;
             ILogger logger = LoggerFactory.Create(x => x.AddConsole()).CreateLogger("ErrorHandlingFilter");
-            logger.LogCritical($"Exception message: {exception.Message}\nStack trace:\n{exception.StackTrace}");
+            logger.LogError($"Exception message: {exception.Message}\nStack trace:\n{exception.StackTrace}");
 
             context.HttpContext.Response.StatusCode = 500;
-            context.ExceptionHandled = true; //optional 
+            context.ExceptionHandled = true; 
         }
     }
 }
