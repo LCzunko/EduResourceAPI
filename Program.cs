@@ -3,6 +3,7 @@ using EduResourceAPI.Controllers.ErrorHandler;
 using EduResourceAPI.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -85,6 +86,24 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddMvc(options =>
 {
     options.Filters.Add(new ErrorHandlingFilter());
+});
+
+builder.Services.PostConfigure<ApiBehaviorOptions>(options =>
+{
+    var builtInFactory = options.InvalidModelStateResponseFactory;
+
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var loggerFactory = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>();
+        var loggerName = context.ActionDescriptor.DisplayName;
+        loggerName ??= string.Empty;
+        var logger = loggerFactory.CreateLogger(loggerName);
+
+        IEnumerable<string> errors = context.ModelState.Values.SelectMany(state => state.Errors).Select(error => error.ErrorMessage);
+        logger.LogInformation($"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path.Value} - Fail - [{string.Join(" | ", errors)}]");
+
+        return builtInFactory(context);
+    };
 });
 
 var app = builder.Build();
