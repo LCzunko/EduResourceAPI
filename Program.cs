@@ -69,6 +69,7 @@ builder.Services.AddAuthentication(options => {
         });
 
 builder.Services.AddSingleton<IJwtAuth>(new JwtAuth(builder.Configuration["JwtConfig:Key"]));
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => {
     options.Password.RequireDigit = false;
