@@ -2,7 +2,7 @@
 {
     public class BadRequestError
     {
-        public BadRequestError(string? traceId, Dictionary<string, string> errors)
+        public BadRequestError(string? traceId, object errors)
         {
             if (traceId == null) this.TraceId = String.Empty;
             else this.TraceId = traceId;
@@ -13,6 +13,6 @@
         public string Title { get; set; } = "One or more validation errors occurred.";
         public int Status { get; set; } = 400;
         public string TraceId { get; set; }
-        public Dictionary<string,string> Errors { get; set; }
+        public object Errors { get; set; }
     }
 }
